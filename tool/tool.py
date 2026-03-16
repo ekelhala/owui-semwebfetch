@@ -3,26 +3,22 @@ title: Web fetch tool.
 description: A tool for precise and token-efficient retrieval of web content, with the help of semantic search.
 author: ekelhala
 version: 0.2
-requirement: requests
-"""
-
-# SemanticSearchClient/tools.py
-"""
-Thin wrapper around the sidecar HTTP API.
 """
 
 import requests
 from typing import Union, List
 from pydantic import BaseModel, Field
 
-# The Open‑WebUI tool base – name must be ``Tools``
 class Tools:
     """
-    Thin wrapper around the sidecar HTTP API.
+    Thin wrapper around the web fetch HTTP API.
     """
 
-    # ---------- Open‑WebUI Valves --------------------------------------
     class Valves(BaseModel):
+        base_url: str = Field(
+            default="http://web-fetch:8000",
+            description="Base URL of the sidecar service (HTTP endpoint).",
+        )
         chunk_size: int = Field(
             default=800,
             description="Size of each text chunk (in characters).",
@@ -36,13 +32,15 @@ class Tools:
             description="Minimum similarity score to keep a chunk.",
         )
 
-    def __init__(self, base_url: str = "http://web-fetch:8000"):
+    def __init__(self):
         """
-        :param base_url: Base URL of the web-fetch service (defaults to Docker link 'web-fetch')
+        Initialise the tool.  All configuration values are read from the
+        Open-WebUI Valves.  The valve defaults are the same as the
+        service constants.
         """
-        self.base_url = base_url.rstrip("/")
         self.valves = self.Valves()
 
+    # ------------------------------------------------------------------ #
     def fetch_and_semantic_search(
         self,
         urls: Union[str, List[str]],
@@ -71,6 +69,8 @@ class Tools:
                 If fetching any URL fails, the function continues processing the rest
                 and appends a succinct error line to the final output.
         """
+        # Build the request URL from the valve
+        base_url = self.valves.base_url.rstrip("/")
         payload = {
             "urls": urls,
             "search_query": search_query,
@@ -81,8 +81,8 @@ class Tools:
             "min_score": self.valves.min_score,
         }
         try:
-            resp = requests.post(f"{self.base_url}/semantic-search", json=payload, timeout=60)
+            resp = requests.post(f"{base_url}/semantic-search", json=payload, timeout=60)
             resp.raise_for_status()
             return resp.text
         except Exception as exc:
-            return f"Error contacting web-fetch service: {exc}"
+            return f"Error contacting fetch service: {exc}"

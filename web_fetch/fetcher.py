@@ -1,7 +1,9 @@
+import os
 import requests
-from typing import Dict
 
-API_URL = "http://browserless:3000/content"
+# The Browserless URL can be overridden via an env var.
+# Default is the same as before.
+API_URL = os.getenv("BROWSERLESS_API_URL", "http://browserless:3000/content")
 
 def fetch_page(url: str) -> str:
     """
