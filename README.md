@@ -120,8 +120,6 @@ Feel free to add:
 - New embeddings models  
 - Extra Open‑WebUI valve types
 
-Please run the included tests (if any) before submitting.
-
 ---
 
 Happy fetching!  
