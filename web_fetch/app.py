@@ -51,14 +51,17 @@ def semantic_search(req: SearchRequest) -> str:
     chunk_texts = [c for _, c in all_chunks]
     ranked = rank_chunks(chunk_texts, req.search_query, req.top_k, req.min_score)
 
-    md_chunks = []
+    from collections import defaultdict
+    grouped: dict[str, list[tuple[str, float]]] = defaultdict(list)
     for idx, txt, score in ranked:
         src, _ = all_chunks[idx]
-        md_chunks.append(
-            f"### Match from `{src}`\n"
-            f"*Score:* {score:.2f}\n\n"
-            f"{txt}\n"
-        )
+        grouped[src].append((txt, score))
+
+    md_chunks = []
+    for src, chunks in grouped.items():
+        md_chunks.append(f"## Matches from `{src}`")
+        for txt, score in chunks:
+            md_chunks.append(f"*Score:* {score:.2f}\n{txt}\n")
 
     if not md_chunks:
         if errors:
